@@ -1,0 +1,6 @@
+# simulation artifacts (waveform SVGs in docs/ ARE committed; raw VCDs are not)
+*.vvp
+*.out
+*.vcd
+build/
+docs/program.hex
