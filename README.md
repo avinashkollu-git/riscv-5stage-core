@@ -1,6 +1,6 @@
 <h1 align="center">RV32I 5-STAGE PIPELINED PROCESSOR</h1>
 
-<p align="center"><b>A synthesizable 32-bit RV32I 5-stage pipelined CPU in Verilog — full EX-stage forwarding, load-use hazard detection, branch resolution, and a bundled assembler.</b></p>
+<p align="center"><b>A synthesizable 32-bit RV32I 5-stage pipelined CPU in Verilog with full EX-stage forwarding, load-use hazard detection, branch resolution, and a bundled assembler.</b></p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/HDL-Verilog-blue">
@@ -31,21 +31,21 @@ result through memory, and chains dependent arithmetic to stress the forwarding 
 
 ## Highlights
 
-- **True 5-stage pipeline** — IF, ID, EX, MEM, WB with explicit pipeline registers between
+- **True 5-stage pipeline**: IF, ID, EX, MEM, WB with explicit pipeline registers between
   every stage (`IF/ID`, `ID/EX`, `EX/MEM`, `MEM/WB`).
-- **Full EX-stage data forwarding** — both operands can be bypassed from `EX/MEM` and
+- **Full EX-stage data forwarding**: both operands can be bypassed from `EX/MEM` and
   `MEM/WB`, eliminating stalls for back-to-back dependent ALU instructions.
-- **Load-use hazard detection** — a dedicated hazard unit detects the load-use case in ID and
+- **Load-use hazard detection**: a dedicated hazard unit detects the load-use case in ID and
   inserts exactly **one** bubble, holding the PC and `IF/ID` register.
-- **Branch and jump resolution in EX** — a taken redirect flushes `IF/ID` and `ID/EX`
+- **Branch and jump resolution in EX**: a taken redirect flushes `IF/ID` and `ID/EX`
   (a 2-cycle penalty) and steers the PC to the target.
-- **Write-first register file** — writes on `negedge` so a WB result is visible to an ID read
+- **Write-first register file**: writes on `negedge` so a WB result is visible to an ID read
   in the *same* cycle, closing the tightest RAW dependency.
-- **Bundled RV32I assembler** — a real Python tool (`tools/assemble.py`) that turns
+- **Bundled RV32I assembler**: a real Python tool (`tools/assemble.py`) that turns
   `program.asm` into `$readmemh`-loadable hex. Write your own program and re-run.
-- **Self-checking testbench** — golden-value checks over the register file and data memory;
+- **Self-checking testbench**: golden-value checks over the register file and data memory;
   the shipped program passes end to end (`RESULT: ALL TESTS PASSED`).
-- **Open-source flow** — Icarus Verilog for simulation, GTKWave for waveforms, a committed
+- **Open-source flow**: Icarus Verilog for simulation, GTKWave for waveforms, a committed
   reference waveform in `docs/`.
 
 ---
@@ -73,7 +73,7 @@ result through memory, and chains dependent arithmetic to stress the forwarding 
 - **Forwarding paths:** `EX/MEM → EX` and `MEM/WB → EX` feed the ALU operand muxes so
   dependent instructions never wait when the producer is an ALU op.
 - **Load-use stall:** detected in ID when the instruction in EX is a load whose `rd` is a
-  source register of the instruction in ID — the PC and `IF/ID` are frozen for one cycle and
+  source register of the instruction in ID, the PC and `IF/ID` are frozen for one cycle and
   an `ID/EX` bubble is injected.
 - **Control redirect:** branch/jump outcome is computed in EX; on a taken redirect `pcsrc`
   steers the PC to the target and `IF/ID` + `ID/EX` are flushed.
@@ -112,8 +112,8 @@ throughput with no bubbles.
 
 Forwarding cannot rescue a load-use dependency: a load's result is not available until the end
 of MEM, one stage too late to bypass into the dependent instruction's EX. The hazard unit
-detects this in ID — the instruction in EX is a load and its destination register is a source
-of the instruction currently in ID — and inserts a single stall cycle. During the stall the PC
+detects this in ID (the instruction in EX is a load and its destination register is a source
+of the instruction currently in ID) and inserts a single stall cycle. During the stall the PC
 and the `IF/ID` register hold their values while `ID/EX` is cleared to a bubble, so the load
 advances to MEM and its value is then forwarded normally into the following EX.
 
@@ -171,7 +171,7 @@ riscv-5stage-core/
 labels, encodes each instruction, and emits `program.hex` in the `$readmemh` format the core
 loads at reset. You can edit `program.asm`, run `make asm`, and re-simulate your own program.
 
-A slice of the shipped test program — the accumulation loop that computes `sum(1..10)`:
+A slice of the shipped test program, the accumulation loop that computes `sum(1..10)`:
 
 ```asm
     li   x1, 0            # x1 = running sum
@@ -197,7 +197,7 @@ make wave       # regenerate docs/riscv_wave.svg from the simulation VCD
 ```
 
 `make test` proves the whole design: it assembles the programs, elaborates the RTL with
-Icarus Verilog, and runs two self-checking testbenches — the pipeline demo (below) and an
+Icarus Verilog, and runs two self-checking testbenches, the pipeline demo (below) and an
 **ISA-coverage test** that exercises every supported instruction (all R/I-type ALU ops,
 `lw`/`sw`, all six branch types taken and not-taken, `jal`/`jalr`, `lui`, `auipc`) and
 checks 24 golden values. Drop your own RV32I code into `tb/program.asm` and re-run to test it.
@@ -210,10 +210,10 @@ Verified with Icarus Verilog. The testbench checks each value against a golden r
 
 | Location | Value | What it proves |
 |----------|-------|----------------|
-| `x1`     | `55`  | `sum(1..10)` — iterative accumulation with per-iteration forwarding of `x1` |
+| `x1`     | `55`  | `sum(1..10)`, iterative accumulation with per-iteration forwarding of `x1` |
 | `x5`     | `55`  | reloaded from `mem[0]` via `LW` |
-| `x6`     | `110` | `x5 + x5` — load-use forwarding *after* the one-cycle stall |
-| `x7`     | `45`  | `55 - 10` — `SUB` with forwarded operands |
+| `x6`     | `110` | `x5 + x5`, load-use forwarding *after* the one-cycle stall |
+| `x7`     | `45`  | `55 - 10`, `SUB` with forwarded operands |
 | `x2`     | `11`  | final loop counter (loop exits after 10 iterations) |
 | `mem[0]` | `55`  | store then reload path through data memory |
 
